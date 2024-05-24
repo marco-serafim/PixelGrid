@@ -186,6 +186,7 @@ int main() {
         glUniform1i(glGetUniformLocation(3, "pixels_each_side"), pixels_x_and_y);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
         
+        /*
         int dx = 1 - pixels_x_and_y;
         for(int i = dx; i <= -dx; i += 2){
             for(int j = dx; j <= -dx; j += 2){
@@ -195,6 +196,16 @@ int main() {
                 }
             }
         }
+        */
+
+       for(int i = 0; i < 32; i++){
+            for(int j = 0; j < 32; j++){
+                if(screenMatrix[i][j]){
+                    glUniform2f(glGetUniformLocation(3, "position_of_pixel"), i, j);
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+                }
+            }
+       }
 
         
         glUseProgram(shaderProgram);
