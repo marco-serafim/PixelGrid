@@ -4,11 +4,12 @@
 #include <GLFW/glfw3.h>
 #include "loader.h"
 #include <math.h>
+#include <stdbool.h>
+#define pixels_x_and_y 32
 
 void processInput(GLFWwindow *window);
 
 
-int pixels_x_and_y = 5;
 
 // resizing function for the OpenGL window
 void resizeFunction(GLFWwindow *window, int width, int height){
@@ -21,10 +22,10 @@ void defColor(double R, double G, double B){
 }
 
 // create grid of pixels (squares) on the screen
-void createGrid(int pixels_x_and_y){
-    glUniform1i(glGetUniformLocation(3, "pixels_each_side"), pixels_x_and_y);
-    for(float j = -1; j < 1; j += 1/pixels_x_and_y){
-        for(float i = -1; i < 1; i += 1/pixels_x_and_y){
+void createGrid(int pixel_number_each_side){
+    glUniform1i(glGetUniformLocation(3, "pixels_each_side"), pixel_number_each_side);
+    for(float j = -1; j < 1; j += 1/pixel_number_each_side){
+        for(float i = -1; i < 1; i += 1/pixel_number_each_side){
             glBindVertexArray(1);
             glUniform2f(glGetUniformLocation(3, "position_of_pixel"), j, i);
             glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);   
@@ -154,21 +155,44 @@ int main() {
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
+
+    // file with the instructions for building (draw.txt)
+    
+    const char *InstructionsFile = loadText("draw.txt");
+    
+    // analyzing the file  
+    bool screenMatrix[32][32] = {false};
+
+    for(int i = 0; InstructionsFile[i] != '\0'; i++){
+        if(InstructionsFile[i] == '('){
+            int x = (InstructionsFile[i+1] - '0') * 10 + (InstructionsFile[i+2] - '0');
+            int y = ((InstructionsFile[i+4] - '0') * 10) + (InstructionsFile[i+5] - '0');   
+            screenMatrix[x][y] = true;
+        }
+    }
+
+    for(int i = 0; i < 32; i++){
+        printf("\n");
+        for(int j = 0; j < 32; j++){
+            printf("%d", screenMatrix[i][j]);
+        }
+    }
     // rendering loop
     while(!glfwWindowShouldClose(window)){
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         processInput(window);
         defColor (0.0f, 1.0f, 1.0f);
-
         glUniform1i(glGetUniformLocation(3, "pixels_each_side"), pixels_x_and_y);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
         
         int dx = 1 - pixels_x_and_y;
         for(int i = dx; i <= -dx; i += 2){
             for(int j = dx; j <= -dx; j += 2){
-                glUniform2f(glGetUniformLocation(3, "position_of_pixel"), i, j);
-                glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+                if(screenMatrix[j][i]){
+                    glUniform2f(glGetUniformLocation(3, "position_of_pixel"), i, j);
+                    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0); 
+                }
             }
         }
 
@@ -192,13 +216,5 @@ int main() {
 
 void processInput(GLFWwindow *window)
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, 1);
-    }      
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        pixels_x_and_y++;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        pixels_x_and_y--;
 }
 
